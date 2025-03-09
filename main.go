@@ -9,6 +9,7 @@ import (
 	"naurki_app_backend.com/config"
 	"naurki_app_backend.com/routes"
 )
+//this is test
 
 func main() {
 	// Load environment variables from .env file
