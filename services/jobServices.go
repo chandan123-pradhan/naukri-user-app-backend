@@ -72,3 +72,20 @@ func JobDetails(jobId string, currentUserId string) (*models.JobPostDetails, err
 	// Return the job details
 	return jobDetails, nil
 }
+
+func GetAppliedJobs(userId int) ([]models.AppliedJob, error) {
+	jobPosts, err := repositories.GetAppliedJobs(userId)
+	if err != nil {
+		// Log the error and return a more detailed error message
+		fmt.Printf("Error fetching applied jobs: %v\n", err)
+		return nil, fmt.Errorf("could not fetch applied jobs: %v", err)
+	}
+
+	// ✅ FIX: Return an empty list (`[]`) instead of an error if no applied jobs are found
+	if len(jobPosts) == 0 {
+		fmt.Println("No applied jobs found for user:", userId)
+		return []models.AppliedJob{}, nil // Returning an empty list `[]` instead of an error
+	}
+
+	return jobPosts, nil
+}

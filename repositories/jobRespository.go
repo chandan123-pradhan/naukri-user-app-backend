@@ -8,6 +8,7 @@ import (
 	"naurki_app_backend.com/config"
 	"naurki_app_backend.com/models"
 )
+
 func GetJobPosts() ([]models.JobPost, error) {
 	// Prepare the SQL query to fetch all job posts
 	stmt := `SELECT id, jobTitle, jobDescription, qualification, noOfRequirements, contactEmail, contactNumber, jobLocation, skills, status, company_id, company_name, company_logo 
@@ -135,6 +136,56 @@ func GetJobDetailsWithApplicants(jobID, currentUserID string) (*models.JobPostDe
 	}
 
 	return jobDetails, nil
+}
+
+
+
+
+
+func GetAppliedJobs(userID int) ([]models.AppliedJob, error) {
+	fmt.Println("Fetching jobs for user:", userID) // Debug log
+
+	stmt := `SELECT jp.id, jp.jobTitle, jp.jobDescription, jp.qualification, jp.noOfRequirements, 
+	                jp.contactEmail, jp.contactNumber, jp.jobLocation, jp.skills, jp.status, 
+	                jp.company_id, jp.company_name, jp.company_logo, a.application_date, a.status 
+	         FROM job_post jp
+	         JOIN applications a ON jp.id = a.job_id
+	         WHERE a.user_id = ?;`
+
+	
+	rows, err := config.DB.Query(stmt, userID)
+	if err != nil {
+		fmt.Printf("Error querying applied jobs: %v\n", err)
+		return nil, fmt.Errorf("could not query applied jobs: %v", err)
+	}
+	defer rows.Close()
+
+	var appliedJobs []models.AppliedJob
+	for rows.Next() {
+		var job models.AppliedJob
+		if err := rows.Scan(&job.JobID, &job.JobTitle, &job.JobDescription, &job.Qualification, 
+			&job.NoOfRequirements, &job.ContactEmail, &job.ContactNumber, &job.JobLocation, 
+			&job.Skills, &job.Status, &job.CompanyID, &job.CompanyName, &job.CompanyLogo, 
+			&job.ApplicationDate, &job.ApplicationStatus); err != nil {
+			fmt.Printf("Error scanning applied job: %v\n", err)
+			return nil, fmt.Errorf("could not scan applied job: %v", err)
+		}
+		appliedJobs = append(appliedJobs, job)
+	}
+
+	if len(appliedJobs) == 0 {
+		fmt.Println("No applied jobs found for user:", userID)
+		return []models.AppliedJob{}, nil // Returning an empty list `[]`
+	}
+
+	// Check for any error that occurred during iteration
+	if err := rows.Err(); err != nil {
+		// Log the error and return an appropriate message
+		fmt.Printf("Error iterating over applied jobs: %v\n", err)
+		return nil, fmt.Errorf("error occurred while fetching applied jobs: %v", err)
+	}
+
+	return appliedJobs, nil
 }
 
 

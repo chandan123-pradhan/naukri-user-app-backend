@@ -136,10 +136,21 @@ func GetJobDetails(w http.ResponseWriter, r *http.Request) {
 
 
 
-// func GetAppliedJobs(w http.ResponseWriter, r *http.Request){
-// 	userId, err := validateToken(w, r)
-// 	if err != nil {
-// 		return // Error response has already been sent by validateToken
-// 	}
+func GetAppliedJobs(w http.ResponseWriter, r *http.Request){
+	userId, err := validateToken(w, r)
+	if err != nil {
+		return // Error response has already been sent by validateToken
+	}
 
-// }
+	jobPosts, err := services.GetAppliedJobs(userId)
+	fmt.Println(err)
+	if err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, "Failed to fetch Applied Jobs", nil)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "Applied jobs fetched successfully", map[string]interface{}{
+		"jobs": jobPosts, // List of job posts
+	})
+
+}
