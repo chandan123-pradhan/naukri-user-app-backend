@@ -38,6 +38,10 @@ func validateToken(w http.ResponseWriter, r *http.Request) (int, error) {
 
 // GetJobPosts handles the request to fetch all job posts
 func GetJobPosts(w http.ResponseWriter, r *http.Request) {
+	_, err := validateToken(w, r)
+	if err != nil {
+		return // Error response has already been sent by validateToken
+	}
 	jobPosts, err := services.GetJobPosts()
 	if err != nil {
 		respondWithJSON(w, http.StatusInternalServerError, "Failed to fetch job posts", nil)

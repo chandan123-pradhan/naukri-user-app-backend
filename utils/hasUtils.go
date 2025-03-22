@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"regexp"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,4 +16,12 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hashedPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+
+// isValidPhoneNumber checks if the phone number is valid
+func IsValidPhoneNumber(phone string) bool {
+	// India mobile number validation pattern
+	var validPhoneRegex = regexp.MustCompile(`^[6-9]\d{9}$`)
+	return validPhoneRegex.MatchString(phone)
 }
