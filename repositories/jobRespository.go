@@ -49,6 +49,47 @@ func GetJobPosts() ([]models.JobPost, error) {
 
 
 
+func GetJobByTitle(title string) ([]models.JobPost, error) {
+	// Prepare the SQL query to fetch job posts by title
+	stmt := `SELECT id, jobTitle, jobDescription, qualification, noOfRequirements, contactEmail, contactNumber, 
+	         jobLocation, skills, status, company_id, company_name, company_logo 
+			 FROM job_post 
+			 WHERE jobTitle LIKE ? AND status = 'open'`
+
+	// Execute the query and store the result
+	rows, err := config.DB.Query(stmt, "%"+title+"%")
+	if err != nil {
+		// Log the error and return an appropriate message
+		fmt.Printf("Error querying job posts: %v\n", err)
+		return nil, fmt.Errorf("could not query job posts: %v", err)
+	}
+	defer rows.Close()
+
+	var jobPosts []models.JobPost
+	for rows.Next() {
+		var jobPost models.JobPost
+		if err := rows.Scan(&jobPost.JobID, &jobPost.JobTitle, &jobPost.JobDescription, &jobPost.Qualification, &jobPost.NoOfRequirements,
+			&jobPost.ContactEmail, &jobPost.ContactNumber, &jobPost.JobLocation, &jobPost.Skills, &jobPost.Status,
+			&jobPost.CompanyID, &jobPost.CompanyName, &jobPost.CompanyLogo); err != nil {
+			// Log the error and return an appropriate message
+			fmt.Printf("Error scanning job post: %v\n", err)
+			return nil, fmt.Errorf("could not scan job post: %v", err)
+		}
+		jobPosts = append(jobPosts, jobPost)
+	}
+
+	// Check for any error that occurred during iteration
+	if err := rows.Err(); err != nil {
+		// Log the error and return an appropriate message
+		fmt.Printf("Error iterating over job posts: %v\n", err)
+		return nil, fmt.Errorf("error occurred while fetching job posts: %v", err)
+	}
+
+	return jobPosts, nil
+}
+
+
+
 
 func ApplyJob(userId int, jobId string) error {
 	// Convert jobId to int (assuming jobId is stored as an integer in the database)

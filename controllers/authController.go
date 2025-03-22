@@ -195,6 +195,119 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 
+// GenerateOTP generates and sends OTP to the user
+func GenerateOTP(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Phone  string `json:"phone"`
+		
+	}
+	
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&req); err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, "Invalid request format", map[string]interface{}{})
+		return
+	}
+	if req.Phone == "" {
+		respondWithJSON(w, http.StatusBadRequest, "Phone is required fields", map[string]interface{}{})
+		return
+	}
+	_, err := services.GenerateOTP(req.Phone)
+	if err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, err.Error(), map[string]interface{}{})
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "OTP Generate Successfully Done.", map[string]interface{}{})
+}
+
+
+
+
+func VerifyOtp(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Phone  string `json:"phone"`
+		Otp	   string `json:"otp"`
+		
+	}
+	
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&req); err != nil {
+		respondWithJSON(w, http.StatusInternalServerError,"Invalid request format", map[string]interface{}{})
+		return
+	}
+	if req.Phone == "" || req.Otp == "" {
+		respondWithJSON(w, http.StatusBadRequest, "Phone and Otp are required fields", map[string]interface{}{})
+		return
+	}
+	_,err := services.VerifyOtp(req.Phone,req.Otp);
+	if(err!=nil){
+		respondWithJSON(w, http.StatusBadRequest, err.Error(), map[string]interface{}{})
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "OTP Verified Successfully Done.", map[string]interface{}{})
+}
+
+
+
+
+
+
+
+func LoginViaOtp(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Phone  string `json:"phone"`
+		Otp	   string `json:"otp"`
+		
+	}
+	
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&req); err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, "Invalid request format", map[string]interface{}{})
+		return
+	}
+	if req.Phone == "" || req.Otp == "" {
+		respondWithJSON(w, http.StatusBadRequest, "Phone and Otp are required fields", map[string]interface{}{})
+		return
+	}
+
+	user, token, err := services.LoginViaOtp(req.Phone,req.Otp)
+	if err != nil {
+		respondWithJSON(w, http.StatusUnauthorized,err.Error(), map[string]interface{}{})
+		return
+	}
+
+	// Prepare the response user data (without password)
+	userResponse := map[string]interface{}{
+		"id":                   user.ID,
+		"full_name":            user.FullName,
+		"email_id":             user.EmailID,
+		"highest_qualification": user.HighestQualification,
+		"mobile_number":        user.MobileNumber,
+		"profile_image_url":    user.ProfileImageURL,
+		"description":user.Description,
+		"skills":user.Skills,
+		"employment_type":user.EmploymentType,
+		"preffered_location":user.PrefferedLocation,
+		"preffered_sallary":user.PrefferedSallary,
+		"preffered_shift":user.PrefferedShift,
+
+	}
+
+	// Respond with success and include the JWT token
+	respondWithJSON(w, http.StatusOK, "Login successful", map[string]interface{}{
+		"user":  userResponse, // User data without password
+		"token": token,        // The JWT token
+	})
+
+}
+
+
+
+
 
 // Helper function to respond with JSON in the desired structure
 func respondWithJSON(w http.ResponseWriter, statusCode int, message string, data interface{}) {
@@ -216,3 +329,4 @@ func respondWithJSON(w http.ResponseWriter, statusCode int, message string, data
 	// Encode the response as JSON
 	json.NewEncoder(w).Encode(response)
 }
+

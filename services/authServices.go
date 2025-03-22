@@ -2,6 +2,8 @@ package services
 
 import (
 	"fmt"
+
+	"math/rand"
 	"naurki_app_backend.com/models"
 	"naurki_app_backend.com/repositories"
 	"naurki_app_backend.com/utils"
@@ -86,5 +88,77 @@ func LoginUser(emailID, password string) (*models.User, string, error) {
 		PrefferedShift: user.PrefferedShift,
 	}, token, nil
 }
+
+
+func GenerateOTP(phone string) (string, error) {
+	// Validate email format
+	if !utils.IsValidPhoneNumber(phone){
+		return "Invalid Phone Number",fmt.Errorf("invalid Phone Number")
+	}
+	otp := fmt.Sprintf("%04d", rand.Intn(10000))
+	fmt.Println(otp)
+	err :=repositories.GenerateOtp(phone,otp);
+	// err :=repositories.GenerateOtp(phone,"1234");
+	if(err!=nil){
+		return "", fmt.Errorf("failed to save OTP: %v", err)
+	}
+	return "success",nil
+}
+
+func VerifyOtp(phone, otp string) (string, error) {
+	// Validate email format
+	if !utils.IsValidPhoneNumber(phone){
+		return "Invalid Phone Number",fmt.Errorf("invalid Phone Number")
+	}
+	
+	lastOneOtp,err := repositories.VerifyOtp(phone,otp)
+	
+	if(err!=nil){
+		return "OTP Verification filed",err
+	}
+
+	if lastOneOtp == otp {
+		return "success",nil
+	}
+	return "Incorrect OTP",fmt.Errorf("incorrect OTP")
+	
+}
+
+
+func LoginViaOtp(phone, otp string)(*models.User, string, error){
+	_, err:= VerifyOtp(phone,otp)
+	if err !=nil{
+		return nil,"",err
+	}
+
+	//if otp verified
+	user, err := repositories.GetUserByMobileNumber(phone)
+	if err != nil {
+		return nil, "", fmt.Errorf("user not found")
+	}
+	// Generate JWT token for the user
+	token, err := utils.GenerateJWT(user.ID)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to generate token: %v", err)
+	}
+
+	// Return the sanitized user data (without the password) and the JWT token
+	return &models.User{
+		ID:                   user.ID,
+		FullName:             user.FullName,
+		EmailID:              user.EmailID,
+		HighestQualification: user.HighestQualification,
+		MobileNumber:         user.MobileNumber,
+		ProfileImageURL:      user.ProfileImageURL,
+		Skills: user.Skills,
+		EmploymentType: user.EmploymentType,
+		Description: user.Description,
+		PrefferedLocation: user.PrefferedLocation,
+		PrefferedSallary: user.PrefferedSallary,
+		PrefferedShift: user.PrefferedShift,
+	}, token, nil
+
+}
+
 
 

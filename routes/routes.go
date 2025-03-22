@@ -20,6 +20,10 @@ func InitializeRoutes() *mux.Router {
 	router.HandleFunc("/apply_job",controllers.ApplyJob).Methods("POST")
 	router.HandleFunc("/job_details",controllers.GetJobDetails).Methods("POST")
 	router.HandleFunc("/applied-jobs",controllers.GetAppliedJobs).Methods("GET")
+	router.HandleFunc("/generate-otp",controllers.GenerateOTP).Methods("POST")
+	router.HandleFunc("/verify-otp",controllers.VerifyOtp).Methods("POST")
+	router.HandleFunc("/login-via-otp",controllers.LoginViaOtp).Methods("POST")
+	router.HandleFunc("/get_jobs",controllers.SearchJobByTitle).Methods("POST")
 	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	// Add other routes for authentication or any other resources
