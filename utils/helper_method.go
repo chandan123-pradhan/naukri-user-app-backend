@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"time"
 )
 
@@ -65,3 +67,26 @@ fmt.Println(createdAt)
 
 	return "OTP Valid", nil // Or whatever success return you use
 }
+
+
+// Helper function to respond with JSON in the desired structure
+func RespondWithJSON(w http.ResponseWriter, statusCode int, message string, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	// Set the response structure
+	response := map[string]interface{}{
+		"status":  "failure", // Default status is failure
+		"message": message,
+		"data":    data, // Send the provided data (or empty if nil)
+	}
+
+	// If there's no error, set the status to "success"
+	if statusCode == http.StatusOK || statusCode == http.StatusCreated {
+		response["status"] = "success"
+	}
+
+	// Encode the response as JSON
+	json.NewEncoder(w).Encode(response)
+}
+
