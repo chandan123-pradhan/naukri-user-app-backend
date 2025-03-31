@@ -98,7 +98,7 @@ func GenerateOTP(phone string) (string, error) {
 	otp := fmt.Sprintf("%04d", rand.Intn(10000))
 	fmt.Println(otp)
 	// err :=repositories.GenerateOtp(phone,otp);
-	err :=repositories.GenerateOtp(phone,"1234");
+	 err :=repositories.GenerateOtp(phone,"1234");
 	if(err!=nil){
 		return "", fmt.Errorf("failed to save OTP: %v", err)
 	}

@@ -91,8 +91,10 @@ func GetJobByTitle(title string) ([]models.JobPost, error) {
 
 
 
+
+
 func ApplyJob(userId int, jobId string) error {
-	// Convert jobId to int (assuming jobId is stored as an integer in the database)
+	// Convert jobId to int
 	jobIdInt, err := strconv.Atoi(jobId)
 	if err != nil {
 		return fmt.Errorf("invalid job ID format: %v", err)
@@ -107,21 +109,41 @@ func ApplyJob(userId int, jobId string) error {
 	}
 
 	if count > 0 {
-		// User has already applied for the job
-		return fmt.Errorf("you have already applied this job")
+		return fmt.Errorf("you have already applied for this job")
 	}
 
-	// Insert the application record if not already applied
+	// Insert the application record
 	stmt = `INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, 'pending')`
 	_, err = config.DB.Exec(stmt, userId, jobIdInt)
 	if err != nil {
-		log.Printf("Error applying for job: %v", err)  // Log the actual error
-		return fmt.Errorf("failed to apply for the job: %v", err)  // Return the real error
+		log.Printf("Error applying for job: %v", err)
+		return fmt.Errorf("failed to apply for the job: %v", err)
 	}
 
-	// Return success if application was successful
+	// Fetch additional details for logging
+	var userName, profilePic string
+	
+
+	stmt = `SELECT full_name, profile_image_url FROM users WHERE id = ?`
+	err = config.DB.QueryRow(stmt, userId).Scan(&userName, &profilePic)
+	if err != nil {
+		log.Printf("Error fetching user details: %v", err)
+		return fmt.Errorf("failed to fetch user details: %v", err)
+	}
+
+	// Call LogJobApplication to store logs
+	err = LogJobApplication(userId, jobIdInt, userName, profilePic)
+	if err != nil {
+		log.Printf("Error logging job application: %v", err)
+		return fmt.Errorf("failed to log job application: %v", err)
+	}
+
 	return nil
 }
+
+
+
+
 
 
 func GetJobDetailsWithApplicants(jobID, currentUserID string) (*models.JobPostDetails, error) {
@@ -229,4 +251,32 @@ func GetAppliedJobs(userID int) ([]models.AppliedJob, error) {
 	return appliedJobs, nil
 }
 
+
+
+
+//Job logs function
+
+func LogJobApplication(userId int, jobId int, userName string, profilePic string) error {
+    // Fetch job title and company_id from job_post table
+    var jobTitle string
+    var companyId int
+
+    query := `SELECT jobTitle, company_id FROM job_post WHERE id = ?`
+    err := config.DB.QueryRow(query, jobId).Scan(&jobTitle, &companyId)
+    if err != nil {
+        return fmt.Errorf("failed to fetch job details: %v", err)
+    }
+
+    // Insert log entry
+    insertQuery := `
+        INSERT INTO job_applications_log (user_id, job_id, job_title, company_id, user_name, profile_pic)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `
+    _, err = config.DB.Exec(insertQuery, userId, jobId, jobTitle, companyId, userName, profilePic)
+    if err != nil {
+        return fmt.Errorf("failed to log job application: %v", err)
+    }
+
+    return nil
+}
 
