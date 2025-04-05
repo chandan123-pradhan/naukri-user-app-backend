@@ -26,6 +26,11 @@ func GetJobPosts() ([]models.JobPost, error) {
 	return jobPosts, nil
 }
 
+
+
+
+
+
 func IsJobIdCorrect(jobId string) bool {
     // Get job posts (assuming GetJobPosts() returns a list of job posts)
     jobPosts, _ := GetJobPosts()
@@ -47,13 +52,49 @@ func IsJobIdCorrect(jobId string) bool {
     return false // Job ID not found
 }
 
-func ApplyJob(userID int ,jobId string)error{
+
+func GetCompanyIdByJobId(jobId string) (int,error) {
+    // Get job posts (assuming GetJobPosts() returns a list of job posts)
+    jobPosts, _ := GetJobPosts()
+
+    // Convert jobId string to integer
+    jobIdInt, err := strconv.Atoi(jobId)
+    if err != nil {
+        fmt.Println("Invalid jobId format:", err)
+        return 0,err
+    }
+
+    // Loop through job posts and check for match
+    for i := 0; i < len(jobPosts); i++ {
+        if jobPosts[i].JobID == jobIdInt {
+            return  jobPosts[i].CompanyID,nil   // Job ID matched
+        }
+    }
+    
+    return 0,err // Job ID not found
+}
+
+
+
+
+
+
+
+
+
+
+
+
+func ApplyJob(userID int ,jobId string)(string,error){
 	
-	applicationMessage := repositories.ApplyJob(userID, jobId)
+	applicationMessage, err := repositories.ApplyJob(userID, jobId)
 
 	// You can do additional logic after calling ApplyJob if needed
 	// For now, just return the message received from ApplyJob
-	return applicationMessage
+	if(err!=nil){
+		return "",err
+	}
+	return applicationMessage,nil
 	 
 }
 

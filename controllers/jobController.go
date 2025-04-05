@@ -59,7 +59,7 @@ func ApplyJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Apply for the job
-	err = services.ApplyJob(userID, req.JobId)
+	message , err := services.ApplyJob(userID, req.JobId)
 	if err != nil {
 		utils.RespondWithJSON(w, http.StatusConflict, err.Error(),  map[string]interface{}{
 		
@@ -70,6 +70,10 @@ func ApplyJob(w http.ResponseWriter, r *http.Request) {
 	utils.RespondWithJSON(w, http.StatusOK, "Job applied successfully.",  map[string]interface{}{
 		
 	});
+	NofityCompany(req.JobId,"Job Applied",message,);
+
+
+	
 }
 
 // GetJobDetails handles the request to fetch details for a specific job
@@ -132,5 +136,28 @@ func GetAppliedJobs(w http.ResponseWriter, r *http.Request){
 	utils.RespondWithJSON(w, http.StatusOK, "Applied jobs fetched successfully", map[string]interface{}{
 		"jobs": jobPosts, // List of job posts
 	})
+
+}
+
+
+func NofityCompany(jobId string,title string, message string){
+	companyId,err := services.GetCompanyIdByJobId(jobId);
+	if(err!=nil){
+		fmt.Println("Filaed to send notification when user applied",err)
+		return
+	}
+
+	fcmToken, err := services.GetCompanyFcm(companyId)
+	if(err!=nil){
+		fmt.Println("Filaed to send notification when user applied",err)
+		return
+	}
+	err =services.SendNotificationToToken(
+		fcmToken, title,message,
+	);
+	if(err!=nil){
+		fmt.Println("Filaed to send notification when user applied",err)
+		return
+	}
 
 }

@@ -93,11 +93,11 @@ func GetJobByTitle(title string) ([]models.JobPost, error) {
 
 
 
-func ApplyJob(userId int, jobId string) error {
+func ApplyJob(userId int, jobId string)(string, error) {
 	// Convert jobId to int
 	jobIdInt, err := strconv.Atoi(jobId)
 	if err != nil {
-		return fmt.Errorf("invalid job ID format: %v", err)
+		return "",fmt.Errorf("invalid job ID format: %v", err)
 	}
 
 	// Check if the user has already applied for this job
@@ -105,11 +105,11 @@ func ApplyJob(userId int, jobId string) error {
 	stmt := `SELECT COUNT(*) FROM applications WHERE user_id = ? AND job_id = ?`
 	err = config.DB.QueryRow(stmt, userId, jobIdInt).Scan(&count)
 	if err != nil {
-		return fmt.Errorf("failed to check application status: %v", err)
+		return "",fmt.Errorf("failed to check application status: %v", err)
 	}
 
 	if count > 0 {
-		return fmt.Errorf("you have already applied for this job")
+		return "",fmt.Errorf("you have already applied for this job")
 	}
 
 	// Insert the application record
@@ -117,7 +117,7 @@ func ApplyJob(userId int, jobId string) error {
 	_, err = config.DB.Exec(stmt, userId, jobIdInt)
 	if err != nil {
 		log.Printf("Error applying for job: %v", err)
-		return fmt.Errorf("failed to apply for the job: %v", err)
+		return "",fmt.Errorf("failed to apply for the job: %v", err)
 	}
 
 	// Fetch additional details for logging
@@ -128,17 +128,17 @@ func ApplyJob(userId int, jobId string) error {
 	err = config.DB.QueryRow(stmt, userId).Scan(&userName, &profilePic)
 	if err != nil {
 		log.Printf("Error fetching user details: %v", err)
-		return fmt.Errorf("failed to fetch user details: %v", err)
+		return "",fmt.Errorf("failed to fetch user details: %v", err)
 	}
 
 	// Call LogJobApplication to store logs
 	err = LogJobApplication(userId, jobIdInt, userName, profilePic)
 	if err != nil {
 		log.Printf("Error logging job application: %v", err)
-		return fmt.Errorf("failed to log job application: %v", err)
+		return "",fmt.Errorf("failed to log job application: %v", err)
 	}
-
-	return nil
+	responseMessage := fmt.Sprintf("%s applied for your job", userName)
+	return responseMessage,nil
 }
 
 

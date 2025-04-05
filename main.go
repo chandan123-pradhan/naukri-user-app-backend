@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"naurki_app_backend.com/config"
+	"naurki_app_backend.com/firebase"
 	"naurki_app_backend.com/routes"
 )
 
@@ -19,7 +20,7 @@ func main() {
 
 	// Set up database connection
 	config.InitDB()
-
+	firebase.InitFirebase() 
 	// Initialize all routes
 	router := routes.InitializeRoutes()
 
