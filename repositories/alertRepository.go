@@ -27,3 +27,43 @@ func CreateAlert(alertData models.CreateAlertModel, userId int, profilePic strin
 	fmt.Println("new alert created ", id)
 	return  nil
 }
+
+
+func GetUserAlertsByUserID(userID int) ([]models.UserAlert, error) {
+	query := `SELECT id, jobTitle, skills, email, username, mobile, userId, location, description, profile_image_url 
+			  FROM user_alerts 
+			  WHERE userId = ?`
+
+	rows, err := config.DB.Query(query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch alerts for user ID %d: %v", userID, err)
+	}
+	defer rows.Close()
+
+	var alerts []models.UserAlert
+	for rows.Next() {
+		var alert models.UserAlert
+		err := rows.Scan(
+			&alert.ID,
+			&alert.JobTitle,
+			&alert.Skills,
+			&alert.Email,
+			&alert.UserName,
+			&alert.MobileNo,
+			&alert.UserID,
+			&alert.Location,
+			&alert.Description,
+			&alert.ProfileImageUrl,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning alert row: %v", err)
+		}
+		alerts = append(alerts, alert)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %v", err)
+	}
+
+	return alerts, nil
+}
