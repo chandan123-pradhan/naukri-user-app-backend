@@ -56,3 +56,26 @@ func CreateAlerts(w http.ResponseWriter, r *http.Request) {
 	utils.RespondWithJSON(w, http.StatusOK, "Alert Created Successfully", map[string]interface{}{})
 	
 }
+
+
+func GetAlerts(w http.ResponseWriter, r *http.Request) {
+	userId, err := utils.ValidateToken(w, r)
+	if err != nil {
+		return // Token validation already sends an error response
+	}
+
+	alerts, err := services.GetAlerts(userId)
+	if err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, "Failed to fetch alerts", map[string]interface{}{})
+		return
+	}
+
+	// Ensure alerts is an empty slice, not nil
+	if alerts == nil {
+		alerts = []models.UserAlert{}
+	}
+
+	utils.RespondWithJSON(w, http.StatusOK, "User alerts fetched successfully", map[string]interface{}{
+		"alerts": alerts,
+	})
+}
