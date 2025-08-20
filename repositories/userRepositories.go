@@ -128,3 +128,12 @@ func VerifyOtp(phone, currentOtp string) (string, error) {
 		return otp, nil
 	}
 }
+
+
+
+// UpdateUserPassword updates user's password by userID
+func UpdateUserPassword(userID int, hashedPassword string) error {
+	query := "UPDATE users SET password = ? WHERE id = ?"
+	_, err := config.DB.Exec(query, hashedPassword, userID)
+	return err
+}

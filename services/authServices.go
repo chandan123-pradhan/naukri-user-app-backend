@@ -125,6 +125,7 @@ func VerifyOtp(phone, otp string) (string, error) {
 }
 
 
+
 func LoginViaOtp(phone, otp string)(*models.User, string, error){
 	_, err:= VerifyOtp(phone,otp)
 	if err !=nil{
@@ -162,3 +163,17 @@ func LoginViaOtp(phone, otp string)(*models.User, string, error){
 
 
 
+func ChangePassword(userID int, newPassword string) error {
+	// Hash the new password
+	hashedPassword, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %v", err)
+	}
+
+	// Call repository to update password
+	if err := repositories.UpdateUserPassword(userID, hashedPassword); err != nil {
+		return fmt.Errorf("failed to update password: %v", err)
+	}
+
+	return nil
+}

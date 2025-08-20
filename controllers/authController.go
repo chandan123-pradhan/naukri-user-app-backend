@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
 	"naurki_app_backend.com/services"
 	"naurki_app_backend.com/utils"
 )
@@ -304,6 +303,84 @@ func LoginViaOtp(w http.ResponseWriter, r *http.Request) {
 	})
 
 }
+
+
+
+func VerifyOtpForgetPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Phone  string `json:"phone"`
+		Otp	   string `json:"otp"`
+		
+	}
+	
+	d := json.NewDecoder(r.Body)
+	d.DisallowUnknownFields()
+	if err := d.Decode(&req); err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, "Invalid request format", map[string]interface{}{})
+		return
+	}
+	if req.Phone == "" || req.Otp == "" {
+		utils.RespondWithJSON(w, http.StatusBadRequest, "Phone and Otp are required fields", map[string]interface{}{})
+		return
+	}
+
+	_, token, err := services.LoginViaOtp(req.Phone,req.Otp)
+	if err != nil {
+		utils.RespondWithJSON(w, http.StatusUnauthorized,err.Error(), map[string]interface{}{})
+		return
+	}
+	// Respond with success and include the JWT token
+	utils.RespondWithJSON(w, http.StatusOK, "Login successful", map[string]interface{}{
+		"token": token,        // The JWT token
+	})
+
+
+
+}
+
+func ChangePassword(w http.ResponseWriter, r *http.Request) {
+	// Validate JWT token and extract userId
+	userId, err := utils.ValidateToken(w, r)
+	if err != nil {
+		return // Error already handled in ValidateToken
+	}
+
+	// Request struct
+	var req struct {
+		NewPassword     string `json:"new_password"`
+		ConfirmPassword string `json:"confirm_password"`
+	}
+
+    d := json.NewDecoder(r.Body)
+	if err := d.Decode(&req); err != nil {
+    utils.RespondWithJSON(w, http.StatusBadRequest, "Invalid request format", map[string]interface{}{})
+    return
+}
+
+	// Validate input
+	if req.NewPassword == "" || req.ConfirmPassword == "" {
+		utils.RespondWithJSON(w, http.StatusBadRequest, "New Password and Confirm Password are required", map[string]interface{}{})
+		return
+	}
+
+	// Check if new and confirm passwords match
+	if req.NewPassword != req.ConfirmPassword {
+		utils.RespondWithJSON(w, http.StatusBadRequest, "New Password and Confirm Password do not match", map[string]interface{}{})
+		return
+	}
+
+	// Call service layer to change password
+	err = services.ChangePassword(userId, req.NewPassword)
+	if err != nil {
+		utils.RespondWithJSON(w, http.StatusInternalServerError, err.Error(), map[string]interface{}{})
+		return
+	}
+
+	// Success response
+	utils.RespondWithJSON(w, http.StatusOK, "Password updated successfully", map[string]interface{}{})
+}
+
+
 
 
 

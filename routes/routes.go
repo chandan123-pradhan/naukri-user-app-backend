@@ -23,11 +23,17 @@ func InitializeRoutes() *mux.Router {
 	router.HandleFunc("/generate-otp",controllers.GenerateOTP).Methods("POST")
 	router.HandleFunc("/verify-otp",controllers.VerifyOtp).Methods("POST")
 	router.HandleFunc("/login-via-otp",controllers.LoginViaOtp).Methods("POST")
+
 	router.HandleFunc("/get_jobs",controllers.SearchJobByTitle).Methods("POST")
 	router.HandleFunc("/create-alert",controllers.CreateAlerts).Methods("POST")
 	router.HandleFunc("/get-alert",controllers.GetAlerts).Methods("GET")
 	router.HandleFunc("/send-notification",controllers.SendNotification).Methods("POST")
 	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+
+
+	router.HandleFunc("/forget-password",controllers.GenerateOTP).Methods("POST")
+	router.HandleFunc("/password/verify-otp",controllers.VerifyOtpForgetPassword).Methods("POST")
+    router.HandleFunc("/change-password",controllers.ChangePassword).Methods("POST")
 
 	// Add other routes for authentication or any other resources
 	// For example:
